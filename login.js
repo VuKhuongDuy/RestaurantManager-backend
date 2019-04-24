@@ -1,6 +1,6 @@
 const mysql = require('mysql');
 
-const con = mysql.createConnection({
+const connect  = mysql.createConnection({
     host: "localhost",
     user: 'root',
     password: "12345678",
@@ -9,8 +9,9 @@ const con = mysql.createConnection({
 
 const getAccount = function(req, res) {
     console.log('login');
-    con.connect(function (err) {
-        con.query('select * from account', function (err, results) {
+    connect.connect((err) => {
+        connect.query('select * from account', function (err, results) {
+            // con.release();
             if (err) throw err;
             else res.send(JSON.stringify(results));
         })
@@ -18,9 +19,10 @@ const getAccount = function(req, res) {
 }
 
 const postAccount = function(req, res) {
-    con.connect(function (err) {
+    connect.connect(function (err) {
         var sql = 'insert into account(user_account,user_password) value("' + req.body.user.firstParam + '","' + req.body.user.secondParam + '")';
-        con.query(sql, function (err, results) {
+        connect.query(sql, function (err, results) {
+            // con.release();
             if (err) throw err;
             else console.log('save ok');
         })

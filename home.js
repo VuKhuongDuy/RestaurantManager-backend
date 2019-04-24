@@ -8,8 +8,6 @@ const con = mysql.createConnection({
 });
 
 const get = function(req, res) {
-    console.log('/dashboard');
-    con.connect(function (err) {
         let totalResult = [];
         let tables = [];
         let revenue = [];
@@ -17,7 +15,7 @@ const get = function(req, res) {
         let rota = [];
 
         con.query("select * from mytable", function (err, results) {
-            if (err) throw err;
+            if (err) console.log(err);
             results.map((value, key) => {
                 tables.push(value);
             })
@@ -25,21 +23,21 @@ const get = function(req, res) {
         });
 
         con.query("SELECT sum(total_cost) as revenue FROM `bill` WHERE check_date = CURRENT_DATE", function (err, results) {
-            if (err) throw err;
+            if (err) console.log(err);
             results.map((value, key) => {
                 revenue.push(value);
             })
         });
 
         con.query("SELECT sum(total_cost) as revenue FROM `bill` WHERE MONTH(check_date) = MONTH(CURRENT_DATE)", function (err, results) {
-            if (err) throw err;
+            if (err) console.log(err);
             results.map((value, key) => {
                 revenue.push(value);
             })
         });
 
         con.query("SELECT sum(total_cost) as revenue FROM `bill` WHERE YEAR(check_date) = YEAR(CURRENT_DATE)", function (err, results) {
-            if (err) throw err;
+            if (err) console.log(err);
             results.map((value, key) => {
                 revenue.push(value);
             })
@@ -47,16 +45,13 @@ const get = function(req, res) {
 
         })
 
-        con.query("SELECT food_name, soluong                            \n \
-                from                                                    \n \
-                    (SELECT id_food, sum(food_count) as soluong         \n \
-                        FROM `billdetail` GROUP BY id_food) as duy,     \n \
-                    food                                                \n \
-                where duy.id_food = food.id                             \n \
-                order by duy.soluong desc                               \n \
-                limit 3"
+        con.query("SELECT food_name, sum(food_count) as soluong         \n \
+                        FROM `billdetail`                               \n \
+                    GROUP BY food_name                                  \n \
+                    order by soluong desc                               \n \
+                    limit 3"
             , function (err, results) {
-                if (err) throw err;
+                if (err) console.log(err);
                 results.map((value, key) => {
                     rank_dish.push(value);
                 })
@@ -67,18 +62,43 @@ const get = function(req, res) {
                     FROM `employee` as e,`employ_work` as ew \n \
                     WHERE e.id = ew.id",
             function (err, results) {
-                if (err) throw err;
+                if (err) console.log(err);
                 results.map((value, key) => {
                     rota.push(value);
                 })
                 totalResult.push(rota);
 
-                console.log(totalResult);
                 res.send(JSON.stringify(totalResult));
             })
-    });
+}
+
+const getUser = function(req,res){
+    const id = req.params.id
+    console.log('---------');
+    con.query('select user_account from account where id = '+id,function(err,results){
+        if(err) console.log(err);
+        res.send(JSON.stringify(results));
+    })
+}
+
+const postUser = function(req,res){
+    const id = req.params.id;
+    con.query('select user_password from account where id = '+id, function(err,results){
+        if(err) console.log(err)
+        password = results[0].user_password;
+        if(password === req.body.oldPassword){
+            con.query('update account set user_password = "'+ req.body.newPassword + '" where id = '+id,function(err,results){
+                if(err) console.log(err);
+                res.send('success')
+            })
+        }else{
+            res.send('fail')
+        }
+    })
 }
 
 module.exports = {
     get,
+    getUser,
+    postUser
 }
