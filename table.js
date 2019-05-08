@@ -42,29 +42,24 @@ const post_table = function (req, res) {
 
 }
 
-const post_bill = function (req, res) {
+const post_bill = async function (req, res) {
     const id = req.body.id_table;
     var id_bill = 0;
     var query1 = 'select id from bill where id_table = ' + Number(id) + " and payment = 'no'";
-    con.query(query1, function (err, results) {
-        if (err){
-            console.error(err)
-        }
+    con.query(query1,async function (err, results) {
+        if (err){console.error(err)}
 
-        results.map((value, key) => {
+        await results.map((value, key) => {
             const objectJson = value;
             id_bill = objectJson.id;
         });
-
         if (id_bill > 0) {
             const query2 = 'select * from billdetail where id = ' + id_bill
-            con.query(query2, function (err, results) {
-                if (err) {
-                    console.error(err)
-                }
-                req.body.data.map((food, key) => {
+            con.query(query2,async function (err, results) {
+                if (err) {console.error(err)}
+                await req.body.data.map(async function(food, key){
                     let flat = 0;
-                    results.map((value, key) => {
+                    await results.map((value, key) => {
                         if (food.food_name == value.food_name) {
                             food.count = Number(food.count) + Number(value.food_count);
                             flat = 1;
@@ -72,20 +67,15 @@ const post_bill = function (req, res) {
                     })
                     if (flat === 0) {
                         con.query('insert into billdetail(id,food_name,food_count) values (' + id_bill + ',"' + food.food_name + '",' + food.count + ')', function (err) {
-                            if (err) {
-                                console.error(err)
-                            }
-                            res.send('Thành công');
+                            if (err) {console.error(err)}
                         })
                     } else {
                         con.query('update billdetail set food_count = ' + Number.parseInt(food.count) + ' where food_name = "' + food.food_name + '" and id = ' + id_bill, function (err) {
-                            if (err){
-                                console.error(err)
-                            }
-                            res.send('Thành công');
+                            if (err){console.error(err)}
                         })
                     }
                 })
+                res.send('Thành công');
             });
         }
     });
@@ -132,11 +122,16 @@ const put_status = function (req, res) {
 const get_BillDetail = function (req, res) {
     const id_table = req.params.id;
     let id_bill = 0;
-    const query = 'select id from bill where id_table = ' + id_table + ' and payment = "no" ';
+    let totalResult = {
+        status: 'empty',
+        listFood: []
+    };
+    const query = 'select b.id, mt.status from bill as b, mytable as mt where id_table = ' + id_table + ' and mt.id = '+id_table+' and payment = "no"';
     con.query(query, function (err, results) {
         if (err) console.log(err)
         results.map((value, key) => {
-            id_bill = value.id
+            id_bill = value.id,
+            totalResult.status = value.status
         })
 
         const query2 = 'SELECT food.food_name, billdetail.food_count, (food.food_price*billdetail.food_count) as price \n \
@@ -144,7 +139,8 @@ const get_BillDetail = function (req, res) {
                             WHERE billdetail.id = '+ id_bill + ' and billdetail.food_name = food.food_name'
         con.query(query2, function (err, results) {
             if (err) console.log(err);
-            res.send(JSON.stringify(results));
+            totalResult.listFood = results;
+            res.send(JSON.stringify(totalResult));
         })
     })
 }

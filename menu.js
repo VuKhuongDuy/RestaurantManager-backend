@@ -12,7 +12,7 @@ const get_menu = function (req, res) {
     let foods = []
     let drinks = []
     let totalResults = []
-
+    
     con.query('select * from food where category = "food"', function (err, results) {
         results.map((value, key) => {
             foods.push(value);
@@ -31,7 +31,7 @@ const get_menu = function (req, res) {
 const post_newDish = function (req, res) {
     con.query('insert into food(id,category,food_name,food_price) \n \
             values('+ req.body.id + ',"' + req.body.category + '","' + req.body.food_name + '",' + req.body.food_price + ')', function (err) {
-                if(err) console.log(error);
+                if(err) console.log(err);
                 res.send('Thành công');
         })
 }
@@ -47,7 +47,7 @@ const post_editDish = function (req, res) {
         if(err) console.log(err);
     });
     con.query(query1,function(err){
-        if(err) console.log(error);
+        if(err) console.log(err);
         res.send('Thành công');
     });
 }
